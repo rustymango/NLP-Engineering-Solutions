@@ -4,7 +4,10 @@ import re
 import spacy
 from spacy.pipeline import EntityRuler
 from spacy.tokens import Span
+from spacy.util import filter_spans
 from spacy.matcher import Matcher
+
+import psycopg2
 
 # NLP Tokenization
 # given problem
@@ -12,58 +15,69 @@ question1 = "Given W360x33 6m column braced laterally once at the weak axis\
     mid-section, calculate the compressive resistance of the column"
 question2 = "Given W360x33 6m column braced laterally once at the weak axis\
     mid-section, calculate the compressive resistance of the column"
-question3 = "Given a W360x33 column with a length of 6 meters braced twice at the weak\
-    axis at 8.2 feet and 2.5m, calculate Cr"
+question3 = "Given a W360x33 column with a length of 7.0 meters braced twice at the\
+    y axis at 8.2 feet and 5000mm, calculate Cr"
 question4 = "Design an unbraced column to withstand a compressive resistance of \
     850kN"
 
+# timer
+start_time = timer()
+
 # create custom pipeline?
 nlp = spacy.load("en_core_web_sm")
-unitEntity = nlp.add_pipe("entity_ruler", after="ner")
+matcher = Matcher(nlp.vocab)
+# eRuler = nlp.add_pipe("entity_ruler", before="ner")
 
-# patterns = [
-#                 # determine what needs to be calculated
-#                 {
-#                     "label": "UNITS", "pattern": [
-#                         {"TEXT": {"REGEX": "((\d+))"}},
-#                         {"TEXT": {"REGEX": "(?=("+'|'.join(units)+r"))"}}
-#                         ]
-#                 }
-# ]
-# unitEntity.add_patterns(patterns)
+## custom pattern to determine axis bracing
+# lateral bracing orientations
+axis = ["weak", "strong", "y", "x"]
+
+matchPatterns = [{"LOWER": {"IN": axis}}, {"LOWER": "axis"}]
+matcher.add("axisBracing", [matchPatterns])
 
 ### check for key words
 ### identify key verbs and associated numbers --> custom pipeline with\
-#-->POS, matcher/entity ruler --> hashmap
+###-->POS, matcher/entity ruler --> hashmap
+
+# hashmap of tokens by POS
 doc = nlp(question3)
 docFinal = {}
+# assume status of bracing as unbraced
+bracing = False
 
 for token in doc:
     str_token = str(token.text)
 
+    # determine braced or unbraced through lemmatization in og loop to save time
+    if str(token.lemma_) == "brace" or str(token.lemma_) == "support":
+        bracing = True
     # remove unnecessary tokens + add key value pair as "POS: [TOKEN]"
-    if token.pos_ not in docFinal and token.pos_ not in ["SPACE", "X", "PUNCT"]:
+    elif token.pos_ not in docFinal and token.pos_ not in ["SPACE", "X", "PUNCT"]:
         docFinal[str(token.pos_)] = [str_token]
     elif token.pos_ in docFinal:
-        docFinal[str(token.pos_)].append(token)
+        docFinal[str(token.pos_)].append(str_token)
 
+# check bracing axis
+matches = matcher(doc)
+for match_id, start, end in matches:
+    string_id = nlp.vocab.strings[match_id]
+    span = doc[start:end]
+    
+    braced_axis = span.text
+
+## identifies values and units --> joins and appends to final doc
+# loads blank spacy pipeline, need to integrate into main but main overlaps
 question = question3
 nlp_unitExtraction = spacy.blank("en")
 doc = nlp_unitExtraction(question)
 
-# tokenized_Doc = [token for token in doc]
-# print(tokenized_Doc)
-
-## IDENTIFY WHAT NEEDS TO BE CALCULATED
-## rule based NER (regex, spacy EntityRuler, "introduction to names entity\
-#->recognition", machine learning CRF/BERT)
-
 og_ents = list(doc.ents)
+# filtered = filter_spans(og_ents)
+# doc.ents = filtered
 units = ["inches", "in", "ft", "feet", "millimeters", "mm", "meters", "m",\
     "kN", "lbs", "pounds", "kip"]
 
 # determine unit + value
-start_time = timer()
 span_ents = []
 pattern = r"(\d+\.?\d*)(\s*)(?:("+'|'.join(units)+r"))"
 
@@ -73,6 +87,7 @@ for match in re.finditer(pattern, doc.text):
     if span is not None:
         span_ents.append((span.start, span.end, span.text))
 
+# print (span_ents)
 # applies POS label to units
 for ent in span_ents:
     start, end, name = ent
@@ -87,40 +102,63 @@ for ent in og_ents:
 
     # print(ent.text, ent.label_)
 
+## assign convert units + assign values to design variables
+# converts values to SI --> find max value = length of member
+# !!! try to use number from "UNITS" than "NUM"
+number_index = 0
+
+for value in docFinal["UNITS"]:
+    docFinal["NUM"][number_index] = float(docFinal["NUM"][number_index])
+
+    if "in" in value or "inches" in value:
+        docFinal["NUM"][number_index] = docFinal["NUM"][number_index]*0.0254
+    elif "ft" in value or "feet" in value:
+        docFinal["NUM"][number_index] = docFinal["NUM"][number_index]*0.3048
+    elif "mm" in value or "millimeter" in value:
+        docFinal["NUM"][number_index] = docFinal["NUM"][number_index]*0.001
+    # bad practice, overlaps with millimeter + element length could be in diff unit
+    # elif "m" in value or "meter" in value:
+    #     element_length = docFinal["NUM"][number_index]
+
+    number_index = number_index + 1
+
+element_length = max(docFinal["NUM"])
+
 print(docFinal)
+
+## identify bracing mechanisms and at what points
+# assumed unbraced
+braced_Lx = element_length
+braced_Ly = element_length
+
+# determines bracing 
+# only incorporates elements 
+brace_locations = [brace for brace in docFinal["NUM"] if brace < element_length]
+
+# bracing = True if braced, determined during hashmap creation
+if bracing and ("y" in braced_axis or "weak" in braced_axis):
+    braced_Ly = brace_locations[0]
+elif bracing:
+    braced_Lx = brace_locations[0]
+print(braced_Ly)
+
+## determine material and properties
+material = docFinal["PROPN"][0]
+
+## IDENTIFY WHAT NEEDS TO BE CALCULATED
+# rule based NER (regex, spacy EntityRuler, "introduction to names entity\
+#->recognition", machine learning CRF/BERT)
+# can either text parse for "calculate, determine, design, etc."
+# OR could identify what vars are missing
+
+# hashmap to determine # of vars
+# if missing, specify in output
+
 
 end_time = timer()
 print(end_time - start_time)
 
-# element pattern
-elements = ["beam", "column", "member"]
-
-# lateral bracing pattern
-axis = ["weak", "strong", "x", "y"]
-
-lengths = {}
-
-# material
-
-# braced or unbraced, how many times, and at what locations, on what axis
-
-# length of column
-
-# link to material properties, if missing, specify in output
-
-# material properties
-# material = []
-# modulusE = 200000
-# yield_mpa = 300
-# radius_gx = 0
-# radius_gy = 0
-# phi = 0.9
-# area = 0
-# steel_class = ""
-
-# element_length = 0
-# unbraced_Lx = 0
-# unbraced_Ly = 0
+##### IGNORE
 
 ### NOTES
 ## alternative unit finding method
@@ -130,6 +168,3 @@ lengths = {}
 # unitList = []
 # unitValues = ["".join(unit[1:]) for unit in pattern]
 # print(unitValues)
-
-# time_end = timer()
-# print(time_end - time_start)
