@@ -145,6 +145,33 @@ print(braced_Ly)
 ## determine material and properties
 material = docFinal["PROPN"][0]
 
+## properties updated in SQL query (note: all properties in mm)
+# query postgreSQL
+conn = psycopg2.connect(
+    host = "localhost",
+    port = 5433,
+    database = "material_properties",
+    user = "postgres",
+    password = "facetrol1"
+)
+
+cur = conn.cursor()
+postgreSQL_query = "SELECT * FROM materials where material_shape = %s"
+cur.execute(postgreSQL_query, (material,))
+
+material_properties = cur.fetchall()
+
+modulusE = 200000
+yield_mpa = 300
+radius_gx = material_properties[0][1]
+radius_gy = material_properties[0][2]
+phi = 0.9
+area = material_properties[0][3]
+steel_class = 1.34
+Cr = []
+
+print(radius_gx, radius_gy, area)
+
 ## IDENTIFY WHAT NEEDS TO BE CALCULATED
 # rule based NER (regex, spacy EntityRuler, "introduction to names entity\
 #->recognition", machine learning CRF/BERT)
