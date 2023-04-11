@@ -1,7 +1,7 @@
 from timeit import default_timer as timer
-import math
-import re
-import spacy
+import math, numpy
+import re, spacy
+from scipy.optimize import minimize_scalar
 from spacy.pipeline import EntityRuler
 from spacy.tokens import Span
 from spacy.util import filter_spans
@@ -65,6 +65,8 @@ for match_id, start, end in matches:
     
     braced_axis = span.text
 
+print(docFinal)
+
 ## identifies values and units --> joins and appends to final doc
 # loads blank spacy pipeline, need to integrate into main but main overlaps
 question = question3
@@ -81,6 +83,7 @@ units = ["inches", "in", "ft", "feet", "millimeters", "mm", "meters", "m",\
 span_ents = []
 pattern = r"(\d+\.?\d*)(\s*)(?:("+'|'.join(units)+r"))"
 
+# works as intended, finds matches
 for match in re.finditer(pattern, doc.text):
     start, end = match.span()
     span = doc.char_span(start, end)
@@ -101,6 +104,10 @@ for ent in og_ents:
     docFinal["UNITS"].append(str(ent.text))
 
     # print(ent.text, ent.label_)
+
+print(docFinal)
+
+##### !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ## assign convert units + assign values to design variables
 # converts values to SI --> find max value = length of member
@@ -128,8 +135,8 @@ print(docFinal)
 
 ## identify bracing mechanisms and at what points
 # assumed unbraced
-braced_Lx = element_length
-braced_Ly = element_length
+Lx = element_length
+Ly = element_length
 
 # determines bracing 
 # only incorporates elements 
@@ -137,10 +144,9 @@ brace_locations = [brace for brace in docFinal["NUM"] if brace < element_length]
 
 # bracing = True if braced, determined during hashmap creation
 if bracing and ("y" in braced_axis or "weak" in braced_axis):
-    braced_Ly = brace_locations[0]
+    Ly = brace_locations[0]
 elif bracing:
-    braced_Lx = brace_locations[0]
-print(braced_Ly)
+    Lx = brace_locations[0]
 
 ## determine material and properties
 material = docFinal["PROPN"][0]
@@ -161,29 +167,90 @@ cur.execute(postgreSQL_query, (material,))
 
 material_properties = cur.fetchall()
 
-modulusE = 200000
-yield_mpa = 300
-radius_gx = material_properties[0][1]
-radius_gy = material_properties[0][2]
-phi = 0.9
-area = material_properties[0][3]
-steel_class = 1.34
-Cr = []
+radius_gx = float(material_properties[0][0])
+radius_gy = float(material_properties[0][1])
+area = float(material_properties[0][2])
+Cr = 566016
 
-print(radius_gx, radius_gy, area)
+# print(radius_gx, radius_gy, area)
+
+##### MOVE TO CALCULATE TAB ONCE CODE IS ORGANIZED
 
 ## IDENTIFY WHAT NEEDS TO BE CALCULATED
-# rule based NER (regex, spacy EntityRuler, "introduction to names entity\
+# consider rule based NER (regex, spacy EntityRuler, "introduction to names entity\
 #->recognition", machine learning CRF/BERT)
-# can either text parse for "calculate, determine, design, etc."
-# OR could identify what vars are missing
 
-# hashmap to determine # of vars
-# if missing, specify in output
+compressionR_vars = [element_length, Lx, Ly, radius_gx, radius_gy, area, Cr]
+# flexuralR_vars = []
+var_status = {"DETERMINED": [], "MISSING": []}
 
+def checkMissing():
+    for variable in compressionR_vars:
+        if variable == None:
+            var_status["MISSING"].append(variable)  
+        # else:
+        #     var_status["DETERMINED"].append(variable)
+
+# determine calculation target
+if Cr == None:
+    calculation_target = "Cr"
+elif len(var_status["MISSING"]) > 1:
+    checkMissing()
+    print(var_status["MISSING"])
+else:
+    checkMissing()
+
+# static inputs
+modulusE = 200000
+yield_mpa = 300
+phi = 0.9
+Kx = 1
+Ky = 1
+
+steel_class = "class C"
+stress_factor = 1.34
+if steel_class == "class H":
+    stress_factor = 2.24
+
+## standard case, calculates compressive resistance
+def calculateCR(Lx, Ly, radius_gx, radius_gy, area):
+    
+    ratio_Kx = Kx*Lx*1000/radius_gx
+    ratio_Ky = Ky*Ly*1000/radius_gy
+
+    if ratio_Kx > ratio_Ky:
+        lambda_K = ratio_Kx*math.sqrt(yield_mpa/(modulusE*math.pi**2))
+    else:
+        lambda_K = ratio_Ky*math.sqrt(yield_mpa/(modulusE*math.pi**2))
+
+    # show intermediate steps to calculate
+
+    # answer
+    compressiveR = phi*area*yield_mpa*(1 + lambda_K**(2*stress_factor))**(-1/stress_factor)
+
+    return str(compressiveR/1000) + "kN"
+    
+print(calculateCR(Lx, Ly, radius_gx, radius_gy, area))
+
+## back calculates column design if Cr given, start with lambda
+# assume unbraced first, target lambda established for back calculation
+targetLambda = ((Cr/(phi*area*yield_mpa))**(-stress_factor) - 1)**(1/(2*stress_factor))
+
+def lambda_0(Ly, targetLambda):
+    # lambda in terms of variables wanting to solve for: Ky, Ly
+    lambda_K = Ky*Ly/radius_gy*math.sqrt(yield_mpa/(modulusE*math.pi**2))
+
+    # lambda_K(Ly) = 0, use for solving 
+    return abs(lambda_K - targetLambda)
+
+# back calculate
+res = minimize_scalar(lambda_0, args=(targetLambda))
+print(res.x)
 
 end_time = timer()
 print(end_time - start_time)
+
+## perform calculation
 
 ##### IGNORE
 
