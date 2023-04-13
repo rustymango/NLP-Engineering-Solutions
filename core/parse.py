@@ -12,13 +12,17 @@ import psycopg2
 # NLP Tokenization
 # given problem
 question1 = "Given W360x33 6m column braced laterally once at the weak axis\
-    mid-section, calculate the compressive resistance of the column"
+ mid-section, calculate the compressive resistance of the column"
 question2 = "Given W360x33 6m column braced laterally once at the weak axis\
-    mid-section, calculate the compressive resistance of the column"
+ mid-section, calculate the compressive resistance of the column"
 question3 = "Given a W360x33 column with a length of 7.0 meters braced twice at the\
-    y axis at 8.2 feet and 5000mm, calculate Cr"
+ y axis at 8.2ft and 5000mm, calculate Cr"
 question4 = "Design an unbraced column to withstand a compressive resistance of \
-    850kN"
+ 850kN with W360x33 steel"
+question5 = "An W360x33 steel column with a length of 5 meters is braced at both ends\
+ . What is the maximum allowable compressive load for this column based on the \
+ Johnson buckling theory?"
+
 
 # timer
 start_time = timer()
@@ -26,153 +30,213 @@ start_time = timer()
 # create custom pipeline?
 nlp = spacy.load("en_core_web_sm")
 matcher = Matcher(nlp.vocab)
-# eRuler = nlp.add_pipe("entity_ruler", before="ner")
-
-## custom pattern to determine axis bracing
-# lateral bracing orientations
-axis = ["weak", "strong", "y", "x"]
-
-matchPatterns = [{"LOWER": {"IN": axis}}, {"LOWER": "axis"}]
-matcher.add("axisBracing", [matchPatterns])
-
-### check for key words
-### identify key verbs and associated numbers --> custom pipeline with\
-###-->POS, matcher/entity ruler --> hashmap
-
-# hashmap of tokens by POS
+# applies pipeline to question
 doc = nlp(question3)
-docFinal = {}
-# assume status of bracing as unbraced
-bracing = False
 
-for token in doc:
-    str_token = str(token.text)
+## custom pattern added to pipeline to determine axis bracing
+def posMap(document):
+    # hashmap of tokens by POS
+    docFinal = {}
+    # assume status of bracing as unbraced
+    bracing = False
 
-    # determine braced or unbraced through lemmatization in og loop to save time
-    if str(token.lemma_) == "brace" or str(token.lemma_) == "support":
-        bracing = True
-    # remove unnecessary tokens + add key value pair as "POS: [TOKEN]"
-    elif token.pos_ not in docFinal and token.pos_ not in ["SPACE", "X", "PUNCT"]:
-        docFinal[str(token.pos_)] = [str_token]
-    elif token.pos_ in docFinal:
-        docFinal[str(token.pos_)].append(str_token)
+    for token in document:
+        str_token = str(token.text)
 
-# check bracing axis
-matches = matcher(doc)
-for match_id, start, end in matches:
-    string_id = nlp.vocab.strings[match_id]
-    span = doc[start:end]
+        # determine braced or unbraced through lemmatization in og loop to save time
+        if str(token.lemma_) == "brace" or str(token.lemma_) == "support":
+            bracing = True
+        # remove unnecessary tokens + add key value pair as "POS: [TOKEN]"
+        elif token.pos_ not in docFinal and token.pos_ not in ["SPACE", "X", "PUNCT"]:
+            docFinal[str(token.pos_)] = [str_token]
+        elif token.pos_ in docFinal:
+            docFinal[str(token.pos_)].append(str_token)
     
-    braced_axis = span.text
-
-print(docFinal)
+    return docFinal, bracing
 
 ## identifies values and units --> joins and appends to final doc
-# loads blank spacy pipeline, need to integrate into main but main overlaps
-question = question3
-nlp_unitExtraction = spacy.blank("en")
-doc = nlp_unitExtraction(question)
+# question = question3
+# nlp_unitExtraction = spacy.blank("en")
+# doc = nlp_unitExtraction(question)
 
-og_ents = list(doc.ents)
+# og_ents = [list(doc.ents)]
 # filtered = filter_spans(og_ents)
 # doc.ents = filtered
-units = ["inches", "in", "ft", "feet", "millimeters", "mm", "meters", "m",\
-    "kN", "lbs", "pounds", "kip"]
+def findValues(docFinal):
 
-# determine unit + value
-span_ents = []
-pattern = r"(\d+\.?\d*)(\s*)(?:("+'|'.join(units)+r"))"
+    og_ents = []
+    units = ["inches", "in", "ft", "feet", "millimeters", "mm", "meters", "m",\
+        "kN", "N", "lbs", "pounds", "kip"]
 
-# works as intended, finds matches
-for match in re.finditer(pattern, doc.text):
-    start, end = match.span()
-    span = doc.char_span(start, end)
-    if span is not None:
-        span_ents.append((span.start, span.end, span.text))
+    # determine unit + value
+    span_ents = []
+    pattern = r"(\d+\.?\d*)(\s*)(?:("+'|'.join(units)+r"))"
 
-# print (span_ents)
-# applies POS label to units
-for ent in span_ents:
-    start, end, name = ent
-    per_ent = Span(doc, start, end, label="UNITS")
-    og_ents.append(per_ent)
+    # works as intended, finds matches
+    for match in re.finditer(pattern, doc.text):
+        start, end = match.span()
+        span = doc.char_span(start, end)
+        if span is not None:
+            span_ents.append((span.start, span.end, span.text))
 
-# appends units to hashmaps
-docFinal["UNITS"] = []
+    # applies POS label to units
+    for ent in span_ents:
+        start, end, name = ent
+        per_ent = Span(doc, start, end, label="UNITS")
+        og_ents.append(per_ent)
 
-for ent in og_ents:
-    docFinal["UNITS"].append(str(ent.text))
+    # appends units to hashmaps
+    docFinal["UNITS"] = []
 
-    # print(ent.text, ent.label_)
-
-print(docFinal)
-
-##### !!!!!!!!!!!!!!!!!!!!!!!!!!!
+    for ent in og_ents:
+        docFinal["UNITS"].append(str(ent.text))
+    
+    print(docFinal)
+    
+    return docFinal
 
 ## assign convert units + assign values to design variables
 # converts values to SI --> find max value = length of member
-# !!! try to use number from "UNITS" than "NUM"
-number_index = 0
+def convertUnits(docFinal):
+    number_index = 0
+    element_lengths = []
+    Cr = 0
 
-for value in docFinal["UNITS"]:
-    docFinal["NUM"][number_index] = float(docFinal["NUM"][number_index])
+    for value in docFinal["UNITS"]:
+        unit_value = float((re.findall(r"[-+]?(?:\d*\.*\d+)", value))[0])
 
-    if "in" in value or "inches" in value:
-        docFinal["NUM"][number_index] = docFinal["NUM"][number_index]*0.0254
-    elif "ft" in value or "feet" in value:
-        docFinal["NUM"][number_index] = docFinal["NUM"][number_index]*0.3048
-    elif "mm" in value or "millimeter" in value:
-        docFinal["NUM"][number_index] = docFinal["NUM"][number_index]*0.001
-    # bad practice, overlaps with millimeter + element length could be in diff unit
-    # elif "m" in value or "meter" in value:
-    #     element_length = docFinal["NUM"][number_index]
+        if "in" in value or "inches" in value:
+            docFinal["UNITS"][number_index] = unit_value*0.0254
+            element_lengths.append(docFinal["UNITS"][number_index])
+        elif "ft" in value or "feet" in value:
+            docFinal["UNITS"][number_index] = unit_value*0.3048
+            element_lengths.append(docFinal["UNITS"][number_index])
+        elif "mm" in value or "millimeter" in value:
+            docFinal["UNITS"][number_index] = unit_value*0.001
+            element_lengths.append(docFinal["UNITS"][number_index])
+        elif "m" in value or "meters" in value:
+            docFinal["UNITS"][number_index] = unit_value
+            element_lengths.append(docFinal["UNITS"][number_index])
+        elif "lbs" in value or "pounds" in value:
+            docFinal["UNITS"][number_index] = unit_value*4.45
+            Cr = unit_value*4.45
+        elif "kN" in value:
+            docFinal["UNITS"][number_index] = unit_value*1000
+            Cr = unit_value*1000
+        elif "N" in value:
+            docFinal["UNITS"][number_index] = unit_value
+            Cr = unit_value
 
-    number_index = number_index + 1
+        number_index = number_index + 1
 
-element_length = max(docFinal["NUM"])
+    if len(element_lengths) > 0:
+        element_length = max(element_lengths)
+    else:
+        element_length = 0
 
-print(docFinal)
+    return docFinal, element_length, Cr, element_lengths
+
+def processTokens(document):
+    # tokens document/question and returns: hashmap of tokens by POS (0)\
+    # and bracing boolean (1)
+    docHash = posMap(document)
+    findValues(docHash[0])
+    return convertUnits(docHash[0]), docHash[1]
+
+results = processTokens(doc)
+docFinal = results[0][0]
+element_length = results[0][1]
+Cr = results[0][2]
+print(Cr)
+# bracing status is boolean = True if determined in POS tagging
+bracing_status = results[1]
+# potential braced lengths
+element_lengths = results[0][3]
+
 
 ## identify bracing mechanisms and at what points
 # assumed unbraced
 Lx = element_length
 Ly = element_length
 
-# determines bracing 
-# only incorporates elements 
-brace_locations = [brace for brace in docFinal["NUM"] if brace < element_length]
+# lateral bracing orientations
+axis = ["weak", "strong", "y", "x"]
+# checks for mentions of specific axis being braced, adds to spacy pipeline
+matchPatterns = [{"LOWER": {"IN": axis}}, {"LOWER": "axis"}]
+matcher.add("axisBracing", [matchPatterns])
 
-# bracing = True if braced, determined during hashmap creation
-if bracing and ("y" in braced_axis or "weak" in braced_axis):
-    Ly = brace_locations[0]
-elif bracing:
-    Lx = brace_locations[0]
+def braceLocations(element_lengths):
+    # determines bracing 
+
+    # check bracing axis
+    matches = matcher(doc)
+    for match_id, start, end in matches:
+        # string_id = nlp.vocab.strings[match_id]
+        span = doc[start:end]     
+        braced_axis = span.text
+
+    # bracing = True if braced, determined during hashmap creation
+    if bracing_status and ("y" in braced_axis or "weak" in braced_axis):
+        length = min(element_lengths)
+        tag = "y"
+    elif bracing_status:
+        length = min(element_lengths)
+        tag = "x"
+    
+    return length, tag
+
+# only run bracing determination if bracing detected in question
+if bracing_status:
+    # print(bracing_status)
+    bracing_info = braceLocations(element_lengths)
+
+    if bracing_info[1] == "y":
+        Ly = bracing_info[0]
+    else:
+        Lx = bracing_info[0]
 
 ## determine material and properties
-material = docFinal["PROPN"][0]
+material = max(docFinal["PROPN"], key=len)
 
 ## properties updated in SQL query (note: all properties in mm)
 # query postgreSQL
-conn = psycopg2.connect(
-    host = "localhost",
-    port = 5433,
-    database = "material_properties",
-    user = "postgres",
-    password = "facetrol1"
-)
+def getMaterials(material):
+    conn = None
+    try:
+        conn = psycopg2.connect(
+            host = "localhost",
+            port = 5433,
+            database = "material_properties",
+            user = "postgres",
+            password = "facetrol1"
+        )
 
-cur = conn.cursor()
-postgreSQL_query = "SELECT * FROM materials where material_shape = %s"
-cur.execute(postgreSQL_query, (material,))
+        cur = conn.cursor()
+        postgreSQL_query = "SELECT * FROM materials where material_shape = %s"
+        cur.execute(postgreSQL_query, (material,))
 
-material_properties = cur.fetchall()
+        material_properties = cur.fetchall()
 
-radius_gx = float(material_properties[0][0])
-radius_gy = float(material_properties[0][1])
-area = float(material_properties[0][2])
-Cr = 566016
+        radius_gx = float(material_properties[0][0])
+        radius_gy = float(material_properties[0][1])
+        area = float(material_properties[0][2])
+    
+    except:
+        radius_gx = 0
+        radius_gy = 0
+        area = 0
+
+    finally:
+        if conn is not None:
+            conn.close()
+    
+    return radius_gx, radius_gy, area
+
+radius_gx, radius_gy, area = getMaterials(material)
 
 # print(radius_gx, radius_gy, area)
+# print(Lx,Ly, element_length, bracing_status)
+# print(Cr)
 
 ##### MOVE TO CALCULATE TAB ONCE CODE IS ORGANIZED
 
@@ -182,23 +246,27 @@ Cr = 566016
 
 compressionR_vars = [element_length, Lx, Ly, radius_gx, radius_gy, area, Cr]
 # flexuralR_vars = []
-var_status = {"DETERMINED": [], "MISSING": []}
+# var_status = {"DETERMINED": [], "MISSING": []}
+var_status = []
 
+# determines calculation target and/or if there are missing inputs
 def checkMissing():
     for variable in compressionR_vars:
         if variable == None:
-            var_status["MISSING"].append(variable)  
+            var_status.append(variable)  
         # else:
         #     var_status["DETERMINED"].append(variable)
 
 # determine calculation target
-if Cr == None:
+if Cr == 0:
     calculation_target = "Cr"
-elif len(var_status["MISSING"]) > 1:
+elif len(var_status) > 1:
     checkMissing()
-    print(var_status["MISSING"])
+    print(var_status)
+    calculation_target = "test"
 else:
     checkMissing()
+    calculation_target = "test"
 
 # static inputs
 modulusE = 200000
@@ -228,29 +296,31 @@ def calculateCR(Lx, Ly, radius_gx, radius_gy, area):
     # answer
     compressiveR = phi*area*yield_mpa*(1 + lambda_K**(2*stress_factor))**(-1/stress_factor)
 
-    return str(compressiveR/1000) + "kN"
-    
-print(calculateCR(Lx, Ly, radius_gx, radius_gy, area))
+    return (str(compressiveR/1000) + "kN"), ratio_Kx, ratio_Ky, lambda_K
 
 ## back calculates column design if Cr given, start with lambda
 # assume unbraced first, target lambda established for back calculation
-targetLambda = ((Cr/(phi*area*yield_mpa))**(-stress_factor) - 1)**(1/(2*stress_factor))
-
 def lambda_0(Ly, targetLambda):
     # lambda in terms of variables wanting to solve for: Ky, Ly
-    lambda_K = Ky*Ly/radius_gy*math.sqrt(yield_mpa/(modulusE*math.pi**2))
+    radius_g = min(radius_gx, radius_gy)
+    lambda_K = Ky*Ly/radius_g*math.sqrt(yield_mpa/(modulusE*math.pi**2))
 
     # lambda_K(Ly) = 0, use for solving 
     return abs(lambda_K - targetLambda)
 
+# base case
+if calculation_target == "Cr":
+    Cr, ratio_Kx, ratio_Ky, lambda_K = calculateCR(Lx, Ly, radius_gx, radius_gy, area)
 # back calculate
-res = minimize_scalar(lambda_0, args=(targetLambda))
-print(res.x)
+elif calculation_target != "Cr":
+    targetLambda = ((Cr/(phi*area*yield_mpa))**(-stress_factor) - 1)**(1/(2*stress_factor))
+
+    res = minimize_scalar(lambda_0, args=(targetLambda))
+    print(res.x)
+
 
 end_time = timer()
 print(end_time - start_time)
-
-## perform calculation
 
 ##### IGNORE
 
