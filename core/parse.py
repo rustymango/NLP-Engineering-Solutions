@@ -23,7 +23,6 @@ question5 = "An W360x33 steel column with a length of 5 meters is braced at both
  . What is the maximum allowable compressive load for this column based on the \
  Johnson buckling theory?"
 
-
 # timer
 start_time = timer()
 
@@ -318,6 +317,40 @@ elif calculation_target != "Cr":
     res = minimize_scalar(lambda_0, args=(targetLambda))
     print(res.x)
 
+## show intermediate calculation steps
+def showSteps(target, Cr, ratio_Kx, ratio_Ky, lambda_K):
+    if target == "Cr":
+        kRatio_formula = "Kx*Lx/rx and Ky*Ly/ry < 200 \n"
+        kxRatio_num = "Kx Ratio: " + str(Kx)+"*"+str(Lx)+"/"+str(radius_gx)+" = "+str(ratio_Kx)
+        kyRatio_num = "Ky Ratio: " + str(Ky)+"*"+str(Ly)+"/"+str(radius_gy)+" = "+str(ratio_Ky)
+
+        lambdaK_formula = "lambda = KL/r*sqrt(Fy/(E*pi^2))"
+        lambdaK_num = str(max(ratio_Kx, ratio_Ky))+"*"\
+            +"sqrt("+str(yield_mpa)+"/"+"("+str(modulusE)+"pi^2)) = "+str(lambda_K)
+        
+        Cr_formula = "Cr = phi*Fy*A*(1 + lambda^(2*1.34))^(-1/1.34)"
+        Cr_num = str(phi)+"*"+str(yield_mpa)+"*"+str(area)+"*(1 + "+str(lambda_K)+"^2.68)^(-1/1.34) = "+str(Cr)
+        
+        return kRatio_formula, kxRatio_num, kyRatio_num, lambdaK_formula, lambdaK_num, Cr_formula, Cr_num      
+    else:
+        lambda_formula = "([Cr/(phi*Fy*A)]^(-1.34) - 1)^(1/2.68)"
+        lambda_num = "(["+str(Cr)+str(phi)+"*"+str(area)+"*"+str(yield_mpa)+"]^(-1.34) - 1)^(1/2.68)"
+
+        kRatio_formula = "L = [lambda/sqrt(Fy/(E*pi^2))]*r/K"
+        kRatio_num = "Maximum unbraced length (Ly) = "+str(res.x)
+
+        return lambda_formula, lambda_num, kRatio_formula, kRatio_num
+
+# base case
+if calculation_target == "Cr":
+    kRatio_formula, kxRatio_num, kyRatio_num, lambdaK_formula, lambdaK_num, Cr_formula, Cr_num = \
+    showSteps(calculation_target, Cr, ratio_Kx, ratio_Ky, lambda_K)
+
+    print("\n", kRatio_formula, "\n", kxRatio_num, "\n", kyRatio_num, "\n\n", lambdaK_formula, "\n", lambdaK_num, "\n\n", Cr_formula, "\n", Cr_num)
+# back calculate
+elif calculation_target != "Cr":
+    lambda_formula, lambda_num, kRatio_formula, kRatio_num = showSteps(calculation_target, Cr, None, None, None)
+    print("\n", lambda_formula, "\n", lambda_num, "\n\n", kRatio_formula, "\n", kRatio_num)
 
 end_time = timer()
 print(end_time - start_time)
