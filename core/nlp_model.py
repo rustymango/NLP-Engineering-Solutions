@@ -8,22 +8,6 @@ from spacy.matcher import Matcher
 import psycopg2
 
 # NLP Tokenization
-# given problem
-# question1 = "Given W360x33 6m column braced laterally once at the weak axis\
-#  midpoint, calculate the compressive resistance of the column"
-# question2 = "Given W360x33 6m column braced laterally once at the weak axis\
-#  at 1/3 points, calculate the compressive resistance of the column"
-# question3 = "Given a W360x33 column with a length of 7.0 meters braced twice at the\
-#  y axis at 8.2ft and 5000mm, calculate Cr"
-# question4 = "Design an unbraced column to withstand a compressive resistance of \
-#  850kN with W360x33 steel"
-# question5 = "An W360x33 steel column with a length of 5 meters is braced at both ends\
-#  . What is the maximum allowable compressive load for this column based on the \
-#  Johnson buckling theory?"
-# question6 = "A W360x33 steel column with a length of 18 feet is unbraced about the\
-#  weak axis except for a brace located at a point 5 feet from one end. What\
-#  is the maximum allowable compressive load for this column based on the Johnson buckling theory?"
-
 # create custom pipeline?
 nlp = spacy.load("en_core_web_sm")
 matcher = Matcher(nlp.vocab)
@@ -145,10 +129,6 @@ def processTokens(document):
 
     return docFinal, column_length, Cr, element_lengths, bracing_status, Lx, Ly
 
-# bracing status is boolean = True if determined in POS tagging
-# unbraced_lengths = potential unbraced lengths
-# docFinal, column_length, Cr, element_lengths, bracing_status, Lx, Ly = processTokens(doc)
-
 ## identify bracing axis, mechanisms, and at what points
 def braceLocations(element_lengths, Lx, Ly, doc):
     # lateral bracing orientations
@@ -209,14 +189,8 @@ def braceLocations(element_lengths, Lx, Ly, doc):
 
     return Lx, Ly
 
-# # only run bracing determination if bracing detected in question
-# if bracing_status:
-#     Lx, Ly = braceLocations(element_lengths, Lx, Ly)
-
 ## determine material and properties
 ## properties updated in SQL query (note: all properties in mm)
-# query postgreSQL
-
 def getMaterials(docFinal):
     material = max(docFinal["PROPN"], key=len)
     conn = None

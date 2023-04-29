@@ -57,7 +57,7 @@ def test_yourcode(test_data, capsys):
         start_time = timer()
         try:
             # Call your code to get the actual_answer
-            actual_answer = runCalculations(question)
+            actual_answer = runCalculations(question)[0]
             # Compare the actual and expected answers
             assert abs(actual_answer - expected_answer) <= 1, f"For '{question}', expected {expected_answer}, but got {actual_answer}"
         except AssertionError:
