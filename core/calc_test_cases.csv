@@ -2,7 +2,7 @@ question,expected_answer
 "Given W360x33 6m column braced laterally once at the weak axis midpoint calculate the compressive resistance of the column",445
 "Given W360x33 6m column braced laterally once at the weak axis at 1/3 points, calculate the compressive resistance of the column",716.4
 "Given a W360x33 column with a length of 7.0 meters braced twice at the y axis at 8.2ft and 5000mm, calculate Cr",566.1
-"Design an unbraced column to withstand a compressive resistance of 850kN with W360x33 steel", 1599.66
+"Design an unbraced column to withstand a compressive resistance of 850kN with W360x33 steel",1599.66
 "An W360x33 steel column with a length of 5 meters is braced at both ends. What is the maximum allowable compressive load for this column based on the Johnson buckling theory?",191.9
 "A W360x33 steel column with a length of 18 feet is unbraced about the weak axis except for a brace located at a point 5 feet from one end. What is the maximum allowable compressive load for this column based on the Johnson buckling theory?",288.5
 

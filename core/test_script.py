@@ -14,33 +14,9 @@ import csv
 
 from calculate import runCalculations
 
-# timer
-# start_time = timer()
-
 # question = "Given W360x33 6m column braced laterally once at the weak axis midpoint calculate the compressive resistance of the column"
 # print(runCalculations(question))
 
-# end_time = timer()
-# print("\n", end_time - start_time)
-
-## TEST METHOD 1
-
-# def test_back_calculate(question, expected_answer):
-#     assert newfun() == expected_answer
-
-# def test_Cr(expected_Cr):
-#     Cr = calculateCR(Lx, Ly, radius_gx, radius_gy, area)
-#     print(expected_Cr, Cr)
-#     print("?")
-#     assert Cr == expected_Cr
-
-# @pytest.mark.parametrize("question, expected_Cr", csv.reader(open("calc_test_cases.csv")))
-# def test_with_csv(question, expected_Cr):
-#     print(question)
-#     print(expected_Cr)
-#     test_Cr(expected_Cr)
-
-## TEST METHOD 2
 
 @pytest.fixture
 def test_data():
