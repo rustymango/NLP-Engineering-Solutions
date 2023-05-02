@@ -1,5 +1,6 @@
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 import json
 
 import sys
@@ -8,6 +9,8 @@ from calculate import runCalculations
 from show_results import showSteps
 from models import app, db
 from models import Calculation
+
+CORS(app)
 
 def format_calculation(calculation):
     return {
@@ -19,7 +22,7 @@ def format_calculation(calculation):
 
 @app.route("/")
 def hello():
-    return "Hey"
+    return "Please use URL: '127.0.0.1:5000/calculations'"
 
 # create and perform calculation
 @app.route("/calculations", methods = ["POST"])
@@ -61,14 +64,20 @@ def get_calculation(id):
     formatted_calculation = format_calculation(calculation)
     return {"calculation": formatted_calculation}
 
-# delete calculation (change to delete all)
-@app.route("/calculations", methods = ["DELETE"])
-def delete_calculation():
-    # calculation = Calculation.query.filter_by(id=id).one()
-    Calculation.query.delete()
-    # db.session.delete(calculation)
+# delete one calculation
+@app.route("/calculations/<id>", methods = ["DELETE"])
+def delete_calculation(id):
+    calculation = Calculation.query.filter_by(id=id).one()
+    db.session.delete(calculation)
     db.session.commit()
     return f"Calculations deleted."
+
+# delete all calculations
+# @app.route("/calculations", methods = ["DELETE"])
+# def delete_calculation():
+#     Calculation.query.delete()
+#     db.session.commit()
+#     return f"Calculations deleted."
 
 # edit calculation (unnecessary?)
 # @app.route("/calculations/<id>", methods = ["PUT"])
