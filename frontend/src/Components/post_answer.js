@@ -77,7 +77,7 @@ function PostCalculations () {
         console.log(calculations?.length)
         return(
             <div>
-                <h3>-.-----------</h3>
+                <h3>Please enter a problem above!</h3>
             </div>
         )
     }

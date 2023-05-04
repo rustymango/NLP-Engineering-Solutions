@@ -111,8 +111,6 @@ def convertUnits(docFinal):
     
     element_lengths = sorted(element_lengths)
 
-    print(docFinal)
-
     return docFinal, column_length, Cr, element_lengths
 
 def processTokens(document):
