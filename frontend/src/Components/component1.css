@@ -1,82 +1,64 @@
-body{
-    background-color: cadetblue;
-    
-  }
-  h1{
-    font-size: 38px;
-  }
-  
-  input[type=text] {
-    width: 30%;
-    padding: 12px 20px;
-    margin: 8px 0;
-    box-sizing: border-box;
-    border: none;
-    border-radius: 15px;
-    background-color: rgb(255, 249, 249);
-    color: rgb(10, 10, 10);
-    font-family: Arial, Helvetica, sans-serif;
-  }
-  
-  input[type=password] {
-    width: 30%;
-    padding: 12px 20px;
-    margin: 8px 0;
-    box-sizing: border-box;
-    border: none;
-    border-radius: 15px;
-    background-color: rgb(255, 249, 249);
-    color: rgb(10, 10, 10);
-    font-family: Arial, Helvetica, sans-serif;
-  }
-  
-  input[type=submit] {
-    background-color: #ddd;
-    border: none;
-    color: black;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    margin: 4px 2px;
-    /* cursor: pointer; */
-    border-radius: 16px;
-    font-family: Arial, Helvetica, sans-serif;
-    margin-left: 22px;
-  }
-  
-  select {
-    width: 20%;
-    padding: 12px 20px;
-    margin: 8px 0;
-    box-sizing: border-box;
-    border: none;
-    border-radius: 15px;
-    background-color: rgb(255, 255, 255);
-    color: rgb(10, 10, 10);
-    font-family: Arial, Helvetica, sans-serif;
-  }
-  
-  
-  .container{
-    background-color: antiquewhite;
-    border-style: hidden;
-    border-radius: 15px;
-    padding:18px;
-    text-align: center;
-    box-shadow: 0 8px 6px -6px black;
-    
-   
-    
-  }
-  @media screen and (max-width:900px){
-  
-      .main-contianer{
-        display: flex;
-        flex-wrap: wrap;
-        flex-direction: column;
-        justify-content: space-evenly; 
-        
-      }
-    
-    }
+body {
+  background-color: #FAF9F6;
+}
+
+h1 {
+  font-size: 38px;
+  text-align: center;
+}
+
+h2 {
+  font-size: 25px;
+  text-align: left;
+  margin-left: 15px;
+  margin-top: 5px;
+  margin-bottom: 0px;
+  padding: 10px 0;
+}
+
+h3 {
+  font-size: 16px;
+  margin-left: 15px;
+  word-wrap: break-word;
+  font-weight: lighter;
+}
+
+th {
+  font-size: 20px
+}
+
+textarea {
+  width: 500px;
+  max-width: 500px;
+  height: 100px;
+  max-height: 500px;
+  padding: 12px 20px;
+  margin: 5px 15px;
+
+  /* box-sizing: border-box; */
+  border: 2px solid black;
+  border-radius: 15px;
+  background-color: #FFFFFF;
+  color: rgb(10, 10, 10);
+
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 17px;
+  font-weight: 100;
+  text-align: left;
+  vertical-align: top;
+  resize: both;
+  display: inline-block;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+button {
+  margin-top: 5px;
+  margin-left: 15px;
+  margin-bottom: 10px;
+  padding: 7px 7px;
+  border-radius: 8px;
+  border-width: 2px;
+  font-weight: 600;
+}

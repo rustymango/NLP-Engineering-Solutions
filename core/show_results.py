@@ -19,9 +19,9 @@ if steel_class == "class H":
 ## show intermediate calculation steps
 def showSteps(result, target, ratio_Kx, ratio_Ky, lambda_K, Lx, Ly, radius_gx, radius_gy, area, Cr):
     if target == "Cr":
-        kRatio_formula = "Kx*Lx/rx and Ky*Ly/ry < 200 \n"
-        kxRatio_num = "Kx Ratio: " + str(Kx)+"*"+str(Lx*1000)+"mm/"+str(radius_gx)+"mm = "+str(ratio_Kx)
-        kyRatio_num = "Ky Ratio: " + str(Ky)+"*"+str(Ly*1000)+"mm/"+str(radius_gy)+"mm = "+str(ratio_Ky)
+        kRatio_formula = "Kx*Lx/rx and Ky*Ly/ry < 200"
+        kxRatio_num = "Kx Ratio: " + str(Kx)+"*"+str(round(Lx*1000, 2))+"mm/"+str(radius_gx)+"mm = "+str(ratio_Kx)
+        kyRatio_num = "Ky Ratio: " + str(Ky)+"*"+str(round(Ly*1000, 2))+"mm/"+str(radius_gy)+"mm = "+str(ratio_Ky)
 
         lambdaK_formula = "lambda = KL/r*sqrt(Fy/(E*pi^2))"
         lambdaK_num = str(max(ratio_Kx, ratio_Ky))+"*"\

@@ -70,7 +70,13 @@ class PostProblem extends Component {
             <div>
                 <form onSubmit={this.handleSubmit }>
                     <h1>ENGINEERING CALCULATOR</h1>
-                    <label>Enter Problem: </label> <input type="text" value={this.state.problem} onChange={this.problemhandler} placeholder="Problem..." /><br />
+                    <h3>Please enter your design problem specifying material type and given design parameters.
+                        The values provided do not have to be in a specific unit; however, all provided answers will be in metric.
+                        The tool is capable of standard formula calculation and back calculation.</h3>
+                    <h2>Enter Problem: </h2> 
+                    {/* <input type="text" value={this.state.problem} onChange={this.problemhandler} placeholder="Problem..."/><br /> */}
+                    <textarea value={this.state.problem} onChange={this.problemhandler} placeholder="Problem..."></textarea>
+                    <br />
                     <button onClick={this.handleSubmit}>Calculate!</button>
                 </form>
             </div>

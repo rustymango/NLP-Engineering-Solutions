@@ -41,34 +41,78 @@ function PostCalculations () {
     }
 
     const td ={
-        padding: '0px 0px 20px 0px'
-    }
-
-    const align ={
-        textAlign: 'justify'
+        padding: '0px 0px 20px 0px',
+        textAlign: 'center'
     }
 
     if (calculations?.length > 0) {
         console.log(calculations?.length)
         return(
             <div>
-                <h1>Calculation Steps + Answer</h1>
-                <table style = {table}>
+                <h2>Calculation Results:</h2>
+                {/* <table style={table}>
                     <thead>
                         <tr>
-                            <th>Test</th>
+                        <th>Calculation Steps:</th>
+                        <th>Answer:</th>
                         </tr>
                     </thead>
                     <tbody>
-                    {
-                        calculations.map(calculation =>
-                            <tr key = {calculation.id}>
-                                <td style={td}> {calculation.calculation_steps} </td> 
-                                <td style={td}> {calculation.answer} </td> 
+                        {calculations.map((calculation) => (
+                        <React.Fragment key={calculation.id}>
+                            <tr>
+                            <td style={td}>{calculation.formula_1}</td>
+                            <td rowSpan="5" style={{ ...td, verticalAlign: "middle" }}>
+                                {calculation.answer}
+                            </td>
                             </tr>
-                        )
-                    }
+                            <tr>
+                            <td style={{ ...td, paddingTop: "0.2em" }}>{calculation.values_1}</td>
+                            </tr>
+                            <tr>
+                            <td style={{ ...td, paddingBottom: "0.2em" }}>{calculation.formula_2}</td>
+                            </tr>
+                            <tr>
+                            <td style={{ ...td, paddingTop: "0.2em" }}>{calculation.values_2}</td>
+                            </tr>
+                            <tr>
+                            <td style={{ ...td, paddingBottom: "0.2em" }}>{calculation.formula_3}</td>
+                            </tr>
+                            <tr>
+                            <td style={{ ...td, paddingTop: "0.2em" }}>{calculation.values_3}</td>
+                            </tr>
+                        </React.Fragment>
+                        ))}
                     </tbody>
+                    </table> */}
+                <table style={table}>
+                <thead>
+                    <tr>
+                    <th>Answer:</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {calculations.map((calculation) => (
+                    <React.Fragment key={calculation.id}>
+                        <tr>
+                        <td style={{ ...td, paddingTop: "0.4em", paddingBottom: "2em" }}>{calculation.answer}</td>
+                        </tr>
+                        <th>Calculation Steps:</th>
+                        <tr>
+                        <td style={{ ...td, paddingTop: "0.5em" }}>
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                            <div style={td}>{calculation.formula_1}</div>
+                            <div style={{ ...td, paddingTop: "0.2em" }}>{calculation.values_1}</div>
+                            <div style={{ ...td, paddingBottom: "0.2em" }}>{calculation.formula_2}</div>
+                            <div style={{ ...td, paddingTop: "0.2em" }}>{calculation.values_2}</div>
+                            <div style={{ ...td, paddingBottom: "0.2em" }}>{calculation.formula_3}</div>
+                            <div style={{ ...td, paddingTop: "0.2em" }}>{calculation.values_3}</div>
+                            </div>
+                        </td>
+                        </tr>
+                    </React.Fragment>
+                    ))}
+                </tbody>
                 </table>
             </div>
         )
