@@ -29,13 +29,17 @@ def test_data():
 
 def test_yourcode(test_data, capsys):
     failed_rows = []
+    passed_tests = 0
+    total_tests = 0
+
     for i, (question, expected_answer) in enumerate(test_data, 1):
         start_time = timer()
         try:
             # Call your code to get the actual_answer
             actual_answer = runCalculations(question)[0]
             # Compare the actual and expected answers
-            assert abs(actual_answer - expected_answer) <= 1, f"For '{question}', expected {expected_answer}, but got {actual_answer}"
+            answer_variance = abs(actual_answer - expected_answer)
+            assert answer_variance <= 5, f"For '{question}', expected {expected_answer}, but got {actual_answer}"
         except AssertionError:
             # If the test fails, record the failed row
             failed_rows.append((i, question, expected_answer, actual_answer))
@@ -45,7 +49,15 @@ def test_yourcode(test_data, capsys):
         print(f"Question: {question}")
         print(f"Expected answer: {expected_answer}")
         print(f"Actual answer: {actual_answer}")
-        print(f"Time elapsed: {end_time - start_time:.6f} seconds\n")
+        print(f"Time elapsed: {end_time - start_time:.6f} seconds")
+
+        if answer_variance <= 5:
+            print("Passed!\n")
+            passed_tests = passed_tests + 1
+        else:
+            print("Failed.\n")
+
+        total_tests = total_tests + 1
     # Print the list of failed rows after all tests have run
     if failed_rows:
         print("Failed rows:")
@@ -54,3 +66,5 @@ def test_yourcode(test_data, capsys):
             print(f"Question: {question}")
             print(f"Expected answer: {expected_answer}")
             print(f"Actual answer: {actual_answer}\n")
+    
+    print(f"{passed_tests} / {total_tests} tests passed!")

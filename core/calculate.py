@@ -83,6 +83,7 @@ def lambda_0(Ly, radius_gx, radius_gy, targetLambda):
 
 def runCalculations(question):
     # process string input into tokenized document
+    question = question.replace(".", " ").replace(",", " ")
     doc = nlp_doc(question)
 
     # bracing status is boolean = True if determined in POS tagging
@@ -104,7 +105,6 @@ def runCalculations(question):
         calculation_target = "Cr"
     elif len(missing_vars) > 1:
         checkMissing(column_length, Lx, Ly, radius_gx, radius_gy, area, Cr)
-        print(missing_vars)
         calculation_target = "test"
     else:
         checkMissing(column_length, Lx, Ly, radius_gx, radius_gy, area, Cr)

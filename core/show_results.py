@@ -58,8 +58,8 @@ def printOutputs(question):
 
     formatCalculations(result, target, ratio_Kx, ratio_Ky, lambda_K, Lx, Ly, radius_gx, radius_gy, area, Cr)
 
-question = "Given a W360x33 column with a length of 7.0 meters braced twice at the y axis at 8.2ft and 5000mm, calculate Cr"
+# question = "Given a W360x33 column with a length of 7.0 meters braced twice at the y axis at 8.2ft and 5000mm, calculate Cr"
 # printOutputs(question)
 
 end_time = timer()
-print("\n", end_time - start_time)
+print("\n", end_time - start_time)  
