@@ -1,6 +1,5 @@
 import axios from 'axios';
 import React, { Component, useState, useEffect } from 'react';
-// import { useParams } from 'react-router-dom';
 
 function PostCalculations () {
 
@@ -50,41 +49,6 @@ function PostCalculations () {
         return(
             <div>
                 <h2>Calculation Results:</h2>
-                {/* <table style={table}>
-                    <thead>
-                        <tr>
-                        <th>Calculation Steps:</th>
-                        <th>Answer:</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {calculations.map((calculation) => (
-                        <React.Fragment key={calculation.id}>
-                            <tr>
-                            <td style={td}>{calculation.formula_1}</td>
-                            <td rowSpan="5" style={{ ...td, verticalAlign: "middle" }}>
-                                {calculation.answer}
-                            </td>
-                            </tr>
-                            <tr>
-                            <td style={{ ...td, paddingTop: "0.2em" }}>{calculation.values_1}</td>
-                            </tr>
-                            <tr>
-                            <td style={{ ...td, paddingBottom: "0.2em" }}>{calculation.formula_2}</td>
-                            </tr>
-                            <tr>
-                            <td style={{ ...td, paddingTop: "0.2em" }}>{calculation.values_2}</td>
-                            </tr>
-                            <tr>
-                            <td style={{ ...td, paddingBottom: "0.2em" }}>{calculation.formula_3}</td>
-                            </tr>
-                            <tr>
-                            <td style={{ ...td, paddingTop: "0.2em" }}>{calculation.values_3}</td>
-                            </tr>
-                        </React.Fragment>
-                        ))}
-                    </tbody>
-                    </table> */}
                 <table style={table}>
                 <thead>
                     <tr>

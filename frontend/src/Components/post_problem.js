@@ -64,7 +64,6 @@ class PostProblem extends Component {
     }
 
     render() {
-        // const {weight, gender, age} = this.state
 
         return (
             <div>
@@ -74,7 +73,6 @@ class PostProblem extends Component {
                         The values provided do not have to be in a specific unit; however, all provided answers will be in metric.
                         The tool is capable of standard formula calculation and back calculation.</h3>
                     <h2>Enter Problem: </h2> 
-                    {/* <input type="text" value={this.state.problem} onChange={this.problemhandler} placeholder="Problem..."/><br /> */}
                     <textarea value={this.state.problem} onChange={this.problemhandler} placeholder="Problem..."></textarea>
                     <br />
                     <button onClick={this.handleSubmit}>Calculate!</button>

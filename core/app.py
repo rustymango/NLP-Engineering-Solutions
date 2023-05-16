@@ -16,7 +16,6 @@ def format_calculation(calculation):
     return {
         "id": calculation.id,
         "problem": calculation.problem,
-        # "calculation_steps": calculation.calculation_steps,
         "formula_1": calculation.formula_1,
         "values_1": calculation.values_1,
         "formula_2": calculation.formula_2,
@@ -36,11 +35,9 @@ def create_calculation():
     problem = request.json["problem"]
 
     result, calculation_target, ratio_Kx, ratio_Ky, lambda_K, Lx, Ly, radius_gx, radius_gy, area, Cr = runCalculations(problem)
-    # answer = request.json["answer"]
 
     if calculation_target == "Cr":
         kRatio_formula, kxRatio_num, kyRatio_num, lambdaK_formula, lambdaK_num, Cr_formula, Cr_num = showSteps(result, calculation_target, ratio_Kx, ratio_Ky, lambda_K, Lx, Ly, radius_gx, radius_gy, area, Cr)
-        # calculation_steps = f"{kRatio_formula},  {kxRatio_num},  {kyRatio_num},  {lambdaK_formula},  {lambdaK_num},  {Cr_formula},  {Cr_num}"
         formula_1 = kRatio_formula
         values_1 = f"{kxRatio_num}, {kyRatio_num}"
         formula_2 = str(lambdaK_formula)
@@ -51,7 +48,6 @@ def create_calculation():
 
     else:
         lambda_formula, lambda_num, kRatio_formula, kRatio_num = showSteps(result, calculation_target, ratio_Kx, ratio_Ky, lambda_K, Lx, Ly, radius_gx, radius_gy, area, Cr)
-        # calculation_steps = f"{lambda_formula},  {lambda_num},  {kRatio_formula},  {kRatio_num}"
         formula_1 = lambda_formula
         values_1 = str(lambda_num)
         formula_2 = str(kRatio_formula)
@@ -60,16 +56,6 @@ def create_calculation():
         values_3 = ""
         answer = str(result) + "mm"
 
-    # calculation_steps = json.dumps(calculation_steps)
-    # formula_1 = json.dumps(formula_1, ensure_ascii=False)
-    # values_1 = json.dumps(values_1)
-    # formula_2 = json.dumps(formula_2)
-    # values_2 = json.dumps(values_2)
-    # formula_3 = json.dumps(formula_3)
-    # values_3 = json.dumps(values_3)
-    # print(formula_1, values_1)
-
-    # calculation = Calculation(problem, calculation_steps, answer)
     calculation = Calculation(problem, formula_1, values_1, formula_2, values_2, formula_3, values_3, answer)
     db.session.add(calculation)
     db.session.commit()
@@ -98,22 +84,6 @@ def delete_calculation(id):
     db.session.delete(calculation)
     db.session.commit()
     return f"Calculations deleted."
-
-# delete all calculations
-# @app.route("/calculations", methods = ["DELETE"])
-# def delete_calculation():
-#     Calculation.query.delete()
-#     db.session.commit()
-#     return f"Calculations deleted."
-
-# edit calculation (unnecessary?)
-# @app.route("/calculations/<id>", methods = ["PUT"])
-# def update_calculation(id):
-#     calculation = Calculation.query.filter_by(id=id)
-#     description = request.json["description"]
-#     calculation.update(dict(description = description))
-#     db.session.commit()
-#     return {"calculation": format_calculation(calculation.one())}
 
 if __name__ == "__main__":
     app.run()

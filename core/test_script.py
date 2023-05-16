@@ -14,10 +14,6 @@ import csv
 
 from calculate import runCalculations
 
-# question = "Given W360x33 6m column braced laterally once at the weak axis midpoint calculate the compressive resistance of the column"
-# print(runCalculations(question))
-
-
 @pytest.fixture
 def test_data():
     test_cases = []
@@ -35,7 +31,7 @@ def test_yourcode(test_data, capsys):
     for i, (question, expected_answer) in enumerate(test_data, 1):
         start_time = timer()
         try:
-            # Call your code to get the actual_answer
+            # Call code to get the actual_answer
             actual_answer = runCalculations(question)[0]
             # Compare the actual and expected answers
             answer_variance = abs(actual_answer - expected_answer)

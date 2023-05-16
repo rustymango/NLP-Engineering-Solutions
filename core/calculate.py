@@ -17,9 +17,6 @@ from nlp_model import nlp_doc, processTokens, braceLocations, getMaterials
 nlp = spacy.load("en_core_web_sm")
 matcher = Matcher(nlp.vocab)
 
-## process string input into tokenized document
-# question = "Given W360x33 6m column braced laterally once at the weak axis midpoint calculate the compressive resistance of the column"
-
 ### CALCULATIONS
 
 # flexuralR_vars = []

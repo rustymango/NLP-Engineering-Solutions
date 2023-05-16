@@ -7,6 +7,8 @@ from spacy.util import filter_spans
 from spacy.matcher import Matcher
 import psycopg2
 
+from private_vars import host_name, port_number, database_name, username, db_password
+
 # NLP Tokenization
 # create custom pipeline?
 nlp = spacy.load("en_core_web_sm")
@@ -196,11 +198,11 @@ def getMaterials(docFinal):
     conn = None
     try:
         conn = psycopg2.connect(
-            host = "localhost",
-            port = 5433,
-            database = "material_properties",
-            user = "postgres",
-            password = "facetrol1"
+            host = host_name,
+            port = port_number,
+            database = database_name,
+            user = username,
+            password = db_password
         )
 
         cur = conn.cursor()
